@@ -9,10 +9,11 @@ settings = get_settings()
 
 app = FastAPI(title="TikTok Leads SaaS", version="1.0.0")
 
+cors_origins = settings.cors_origins.split(",") if settings.cors_origins != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=settings.cors_origins != "*",
     allow_methods=["*"],
     allow_headers=["*"],
 )

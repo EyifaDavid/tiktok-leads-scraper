@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     scraper_min_delay: float = 5.0
     scraper_max_delay: float = 15.0
 
-    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+    cors_origins: str = "*"
 
 
 @lru_cache()
