@@ -331,8 +331,6 @@ class TikTokScraper(BaseScraper):
         self.logger.info(f"Auto-discovery complete. Collected {len(self._leads)} leads")
         return self._leads
 
-    async def scrape_profile(self, profile_url: str) -> Optional[Lead]:
-
     async def auto_discover(self, max_results: int = 100) -> List[Lead]:
         """Automatically discover leads using multiple strategies.
         
