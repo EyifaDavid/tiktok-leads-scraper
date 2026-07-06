@@ -33,14 +33,18 @@ def is_transient_error(exception: Exception) -> bool:
     Returns:
         True if the error is transient and should be retried
     """
-    from tiktok_leads.exceptions import RateLimitError, SoftBlockError
+    from tiktok_leads.exceptions import RateLimitError, SoftBlockError, BrowserError, ProxyError
     
     transient_exceptions = (
         ConnectionError,
+        ConnectionResetError,
         TimeoutError,
+        asyncio.TimeoutError,
         OSError,
         RateLimitError,
         SoftBlockError,
+        BrowserError,
+        ProxyError,
     )
     
     if isinstance(exception, transient_exceptions):
@@ -50,6 +54,10 @@ def is_transient_error(exception: Exception) -> bool:
         status = getattr(exception, 'status', 0)
         if status in (429, 408, 500, 502, 503, 504):
             return True
+    
+    err_str = str(exception).lower()
+    if any(kw in err_str for kw in ["timeout", "econnrefused", "econnreset", "closed", "blocked"]):
+        return True
     
     return False
 

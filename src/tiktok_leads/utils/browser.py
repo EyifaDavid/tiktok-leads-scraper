@@ -3,11 +3,45 @@
 import asyncio
 import random
 import logging
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Tuple
 
 from playwright.async_api import Page, Locator
 
 logger = logging.getLogger(__name__)
+
+# Common viewport sizes for realistic fingerprinting
+VIEWPORTS = [
+    (1920, 1080),
+    (1366, 768),
+    (1536, 864),
+    (1440, 900),
+    (1280, 720),
+    (1600, 900),
+    (1280, 800),
+    (1920, 1200),
+]
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+]
+
+
+def random_viewport() -> Tuple[int, int]:
+    """Pick a random viewport size."""
+    return random.choice(VIEWPORTS)
+
+
+def random_user_agent() -> str:
+    """Pick a random user agent string."""
+    return random.choice(USER_AGENTS)
+
+
+async def human_delay(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
 
 
 async def human_delay(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
