@@ -148,13 +148,78 @@ class TikTokScraper(BaseScraper):
             return
         try:
             self.logger.info("Visiting TikTok homepage first...")
-            await self._page.goto(self.HOME_URL, wait_until="networkidle", timeout=30000)
+            await self._page.goto(self.HOME_URL, wait_until="domcontentloaded", timeout=30000)
             await human_delay(3, 6)
             await scroll_page(self._page, random.randint(300, 800))
             await human_delay(2, 4)
             self._visited_home = True
         except Exception as e:
             self.logger.warning(f"Homepage visit failed (non-critical): {e}")
+
+    async def _login_to_tiktok(self) -> bool:
+        """Log into TikTok if credentials are configured.
+
+        Returns:
+            True if already logged-in or login succeeded, False on failure.
+        """
+        email = self.config.tiktok_email
+        password = self.config.tiktok_password
+        if not email or not password:
+            self.logger.info("No TikTok credentials configured, skipping login")
+            return True
+
+        try:
+            self.logger.info("Logging into TikTok...")
+            await self._page.goto(f"{self.HOME_URL}/login", wait_until="domcontentloaded", timeout=30000)
+            await human_delay(3, 6)
+
+            # Try "Use phone / email / username" to switch to email login
+            switch_btn = await self._page.query_selector('[data-e2e="login-other-methods"]')
+            if switch_btn:
+                await switch_btn.click()
+                await human_delay(2, 4)
+
+            email_input = await self._page.query_selector('input[name="username"]')
+            if not email_input:
+                email_input = await self._page.query_selector('input[type="text"][placeholder*="email" i]')
+            if not email_input:
+                email_input = await self._page.query_selector('input[placeholder*="Phone" i]')
+
+            if not email_input:
+                self.logger.warning("Could not find email input on login page")
+                return False
+
+            await email_input.click()
+            await email_input.fill(email)
+            await human_delay(1, 3)
+
+            pass_input = await self._page.query_selector('input[type="password"]')
+            if not pass_input:
+                self.logger.warning("Could not find password input on login page")
+                return False
+
+            await pass_input.click()
+            await pass_input.fill(password)
+            await human_delay(1, 3)
+
+            login_btn = await self._page.query_selector('button[data-e2e="login-submit"]')
+            if login_btn:
+                await login_btn.click()
+            else:
+                await pass_input.press("Enter")
+
+            await human_delay(5, 10)
+
+            current_url = self._page.url
+            if "/login" not in current_url and "/verify" not in current_url:
+                self.logger.info("TikTok login successful")
+                return True
+
+            self.logger.warning("TikTok login may have failed (still on login page)")
+            return False
+        except Exception as e:
+            self.logger.warning(f"TikTok login failed: {e}")
+            return False
 
     async def _close_browser(self) -> None:
         """Close Playwright browser."""
@@ -215,9 +280,10 @@ class TikTokScraper(BaseScraper):
     async def _scrape_impl(self, query: str, max_results: int) -> List[Lead]:
         """Internal scrape implementation (called with block recovery)."""
         await self._visit_homepage_first()
+        await self._login_to_tiktok()
 
         search_url = self.SEARCH_URL_TEMPLATE.format(query=quote_plus(query))
-        await self._page.goto(search_url, wait_until="networkidle", timeout=30000)
+        await self._page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
         await human_delay(5, 10)
 
         if await self._is_soft_blocked():
@@ -284,6 +350,7 @@ class TikTokScraper(BaseScraper):
     async def _auto_discover_impl(self, max_results: int = 100) -> List[Lead]:
         """Internal auto-discover implementation."""
         await self._visit_homepage_first()
+        await self._login_to_tiktok()
 
         if await self._is_soft_blocked():
             raise SoftBlockError("TikTok soft block detected on homepage")
@@ -423,7 +490,7 @@ class TikTokScraper(BaseScraper):
             )
         
         try:
-            await self._page.goto(profile_url, wait_until="networkidle")
+            await self._page.goto(profile_url, wait_until="domcontentloaded")
             await human_delay(4, 8)
             
             # Extract profile data
@@ -527,7 +594,7 @@ class TikTokScraper(BaseScraper):
             Dictionary with profile data
         """
         try:
-            await self._page.goto(profile_url, wait_until="networkidle")
+            await self._page.goto(profile_url, wait_until="domcontentloaded")
             await human_delay(4, 8)
             
             return await self._extract_profile_data()

@@ -141,7 +141,7 @@ class AutoDiscoverer:
             try:
                 # Navigate to search
                 search_url = self.SEARCH_URL.format(query=quote_plus(query))
-                await page.goto(search_url, wait_until="networkidle")
+                await page.goto(search_url, wait_until="domcontentloaded")
                 await human_delay(5, 10)
                 
                 # Scroll and collect
@@ -191,7 +191,7 @@ class AutoDiscoverer:
             try:
                 # Navigate to hashtag page
                 hashtag_url = self.HASHTAG_URL.format(hashtag=hashtag)
-                await page.goto(hashtag_url, wait_until="networkidle")
+                await page.goto(hashtag_url, wait_until="domcontentloaded")
                 await human_delay(5, 10)
                 
                 # Scroll and collect

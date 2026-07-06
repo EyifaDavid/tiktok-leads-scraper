@@ -6,9 +6,11 @@ Usage:
     python local_scrape.py --profile https://www.tiktok.com/@username
 
 Environment variables:
-    API_URL          - Backend URL (default: Railway)
-    SCRAPER_EMAIL    - Login email
-    SCRAPER_PASSWORD - Login password
+    API_URL           - Backend URL (default: Railway)
+    SCRAPER_EMAIL     - Railway login email
+    SCRAPER_PASSWORD  - Railway login password
+    TIKTOK_EMAIL      - TikTok login email (required for search)
+    TIKTOK_PASSWORD   - TikTok login password
 """
 
 import asyncio
@@ -40,8 +42,10 @@ def parse_args():
     parser.add_argument("-m", "--max", type=int, default=50, help="Max leads")
     parser.add_argument("--no-headless", action="store_true", help="Visible browser")
     parser.add_argument("--api-url", default=API_URL, help="Railway backend URL")
-    parser.add_argument("--email", default=EMAIL, help="Login email")
-    parser.add_argument("--password", default=PASSWORD, help="Login password")
+    parser.add_argument("--email", default=EMAIL, help="Railway login email")
+    parser.add_argument("--password", default=PASSWORD, help="Railway login password")
+    parser.add_argument("--tiktok-email", default=os.getenv("TIKTOK_EMAIL"), help="TikTok login email")
+    parser.add_argument("--tiktok-password", default=os.getenv("TIKTOK_PASSWORD"), help="TikTok login password")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     return parser.parse_args()
 
@@ -105,7 +109,7 @@ async def main():
         print("ERROR: Provide --query, --auto, or --profile")
         sys.exit(1)
 
-    setup_logging("DEBUG" if args.verbose else "INFO", None)
+    setup_logging("DEBUG" if args.verbose else "INFO", "logs/local_scrape.log")
 
     print(f"Logging into {api_url}...")
     token = login(email, password, api_url)
@@ -124,6 +128,11 @@ async def main():
     job = create_job(token, api_url, mode, query, args.max)
     job_id = job["id"]
     print(f"Job {job_id} created (status: {job['status']})")
+
+    if args.tiktok_email:
+        os.environ["TIKTOK_EMAIL"] = args.tiktok_email
+    if args.tiktok_password:
+        os.environ["TIKTOK_PASSWORD"] = args.tiktok_password
 
     config = get_settings()
     if args.no_headless:

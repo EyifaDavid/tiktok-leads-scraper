@@ -56,6 +56,10 @@ class Settings(BaseSettings):
         description="Browser user agent string",
     )
 
+    # TikTok Login (required for user search)
+    tiktok_email: Optional[str] = Field(default=None, description="TikTok login email")
+    tiktok_password: Optional[str] = Field(default=None, description="TikTok login password")
+
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")
     log_file: str = Field(default="logs/scraper.log", description="Log file path")
