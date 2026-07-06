@@ -42,9 +42,6 @@ def random_user_agent() -> str:
 
 
 async def human_delay(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
-
-
-async def human_delay(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
     """Add human-like random delay.
     
     Args:
