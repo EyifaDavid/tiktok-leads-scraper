@@ -98,7 +98,7 @@ async def _run_scrape_job_async(job_id: int):
             try:
                 db.rollback()
                 job = db.query(ScrapeJob).filter(ScrapeJob.id == job_id).first()
-                if job:
+                if job and job.status != "completed":
                     job.status = "failed"
                     job.error_message = str(e)
                     job.completed_at = datetime.utcnow()

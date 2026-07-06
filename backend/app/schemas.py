@@ -63,6 +63,20 @@ class ScrapeJobList(BaseModel):
 
 # ── Leads ──
 
+class LeadCreate(BaseModel):
+    job_id: int = 0
+    username: str
+    profile_url: str = ""
+    bio: str = ""
+    emails: str = ""
+    phones: str = ""
+    followers: str = "0"
+    following: str = "0"
+    likes: str = "0"
+    external_link: str = ""
+    verified: bool = False
+
+
 class LeadOut(BaseModel):
     id: int
     job_id: int
@@ -84,6 +98,11 @@ class LeadOut(BaseModel):
 class LeadList(BaseModel):
     leads: List[LeadOut]
     total: int
+
+
+class BulkLeadUpload(BaseModel):
+    job_id: int
+    leads: List[LeadCreate]
 
 
 # ── Stats / Quota ──

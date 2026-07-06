@@ -3,10 +3,51 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Lead, ScrapeJob
-from app.schemas import LeadOut, LeadList
+from app.schemas import LeadOut, LeadList, BulkLeadUpload
 from app.auth import get_current_user_id
+from datetime import datetime
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
+
+
+@router.post("/bulk")
+def upload_leads(
+    body: BulkLeadUpload,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    job = db.query(ScrapeJob).filter(ScrapeJob.id == body.job_id, ScrapeJob.user_id == user_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    count = 0
+    for sl in body.leads:
+        lead = Lead(
+            job_id=job.id,
+            user_id=user_id,
+            username=sl.username,
+            profile_url=sl.profile_url,
+            bio=sl.bio,
+            emails=sl.emails,
+            phones=sl.phones,
+            followers=sl.followers,
+            following=sl.following,
+            likes=sl.likes,
+            external_link=sl.external_link,
+            verified=sl.verified,
+            scraped_at=datetime.utcnow(),
+        )
+        db.add(lead)
+        count += 1
+
+    user = job.user
+    user.quota_used += count
+    job.leads_found += count
+    job.status = "completed"
+    job.completed_at = datetime.utcnow()
+    db.commit()
+
+    return {"uploaded": count}
 
 
 @router.get("", response_model=LeadList)

@@ -18,6 +18,7 @@ def start_scrape(
     background_tasks: BackgroundTasks,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
+    local: bool = Query(False, description="Skip background task; scraper runs locally"),
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -40,7 +41,8 @@ def start_scrape(
     db.commit()
     db.refresh(job)
 
-    background_tasks.add_task(run_scrape_job, job.id)
+    if not local:
+        background_tasks.add_task(run_scrape_job, job.id)
 
     return job
 
