@@ -1,0 +1,12 @@
+**/venv/
+**/node_modules/
+**/__pycache__/
+**/.next/
+**/.git/
+**/.env
+**/.env.local
+**/*.pyc
+**/.pytest_cache/
+logs/
+data/
+*.db
