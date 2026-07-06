@@ -23,11 +23,15 @@ def run_scrape_job(job_id: int):
 async def _run_scrape_job_async(job_id: int):
     settings = get_settings()
     db_url = settings.database_url
-    engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    connect_args = {}
+    if db_url.startswith("sqlite"):
+        connect_args["check_same_thread"] = False
+    engine = create_engine(db_url, connect_args=connect_args)
     SessionLocal = sessionmaker(bind=engine)
 
-    db = SessionLocal()
+    db = None
     try:
+        db = SessionLocal()
         job = db.query(ScrapeJob).filter(ScrapeJob.id == job_id).first()
         if not job:
             logger.error(f"Job {job_id} not found")
@@ -90,11 +94,17 @@ async def _run_scrape_job_async(job_id: int):
 
     except Exception as e:
         logger.exception(f"Scrape job {job_id} failed")
-        job = db.query(ScrapeJob).filter(ScrapeJob.id == job_id).first()
-        if job:
-            job.status = "failed"
-            job.error_message = str(e)
-            job.completed_at = datetime.utcnow()
-            db.commit()
+        if db is not None:
+            try:
+                db.rollback()
+                job = db.query(ScrapeJob).filter(ScrapeJob.id == job_id).first()
+                if job:
+                    job.status = "failed"
+                    job.error_message = str(e)
+                    job.completed_at = datetime.utcnow()
+                    db.commit()
+            except Exception as inner:
+                logger.error(f"Failed to update job {job_id} status: {inner}")
     finally:
-        db.close()
+        if db is not None:
+            db.close()
